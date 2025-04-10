@@ -26,7 +26,7 @@ import DropdownAlert, {
 import Animated, { useAnimatedStyle, withTiming, useSharedValue } from 'react-native-reanimated';
 import strings from "../languages/strings.js";
 
-const Bookings = (props) => {
+const   Bookings = (props) => {
     const navigation = useNavigation();
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);

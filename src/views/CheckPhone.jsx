@@ -72,31 +72,31 @@ const CheckPhone = (props) => {
   }
 
   const call_check_phone = async (phone_with_code) => {
-    //console.log({ phone_with_code: phone_with_code })
+    console.log({ phone_with_code: phone_with_code })
 
-    // await axios({
-    //   method: 'post',
-    //   url: api_url + check_phone,
-    //   data: { phone_with_code: phone_with_code }
-    // })
-    //   .then(async response => {
-    //     setLoading(false);
-    //     navigate(response.data.result);
-    //   })
-    //   .catch(error => {
-    //     setLoading(false);
-    //     console.log(error)
-    //     alt({
-    //       type: DropdownAlertType.Error,
-    //       title: 'Error',
-    //       message: strings.sorry_something_went_wrong,
-    //     });
+    await axios({
+      method: 'post',
+      url: api_url + check_phone,
+      data: { phone_with_code: phone_with_code }
+    })
+      .then(async response => {
+        setLoading(false);
+        navigate(response.data.result);
+      })
+      .catch(error => {
+        setLoading(false);
+        console.log(error)
+        alt({
+          type: DropdownAlertType.Error,
+          title: 'Error',
+          message: strings.sorry_something_went_wrong,
+        });
 
-    //   });
+      });
        
 
     setLoading(false);
-    navigation.navigate('Home');
+
 
 
 

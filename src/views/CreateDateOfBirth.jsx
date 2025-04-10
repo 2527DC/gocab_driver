@@ -6,7 +6,8 @@ import {
     View,
     SafeAreaView,
     TextInput,
-    StatusBar
+    StatusBar,
+    Platform
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as colors from '../assets/css/Colors';
@@ -15,7 +16,7 @@ import Icon, { Icons } from '../components/Icons';
 import DropdownAlert, {
     DropdownAlertData,
     DropdownAlertType,
-  } from 'react-native-dropdownalert';
+} from 'react-native-dropdownalert';
 import { connect } from 'react-redux';
 import { updateDateOfBirth } from '../actions/RegisterActions';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -35,10 +36,6 @@ const CreateDateOfBirth = (props) => {
         navigation.goBack();
     }
 
-    useEffect(() => {
-
-    }, []);
-
     const check_valid = () => {
         if (date_of_birth) {
             navigate();
@@ -47,8 +44,7 @@ const CreateDateOfBirth = (props) => {
                 type: DropdownAlertType.Error,
                 title: strings.validation_error,
                 message: strings.please_select_your_date_of_birth,
-              });
-           
+            });
         }
     }
 
@@ -57,7 +53,6 @@ const CreateDateOfBirth = (props) => {
         navigation.navigate('CreatePassword');
     }
 
-    
     const show_date_picker = () => {
         setDatePickerVisibility(true);
     };
@@ -67,26 +62,18 @@ const CreateDateOfBirth = (props) => {
     };
 
     const handle_confirm = (date) => {
-        console.warn("A date has been picked: ", date);
         hide_date_picker();
-        set_default_date(new Date(date), 1);
+        set_default_date(new Date(date));
     };
 
-    const set_default_date = async (currentdate) => {
-        let datetime =
-            (await (currentdate.getDate() < 10 ? "0" : "")) +
-            currentdate.getDate() +
-            "-" +
-            (currentdate.getMonth() + 1 < 10 ? "0" : "") +
-            (currentdate.getMonth() + 1) +
-            "-" +
-            currentdate.getFullYear();
-        let label =
-            (await (currentdate.getDate() < 10 ? "0" : "")) +
-            currentdate.getDate() +
-            " " +
-            month_names[currentdate.getMonth()] +
-            ", " + currentdate.getFullYear();
+    const set_default_date = (currentdate) => {
+        const day = currentdate.getDate() < 10 ? "0" + currentdate.getDate() : currentdate.getDate();
+        const month = (currentdate.getMonth() + 1) < 10 ? "0" + (currentdate.getMonth() + 1) : (currentdate.getMonth() + 1);
+        const year = currentdate.getFullYear();
+        
+        const datetime = `${day}-${month}-${year}`;
+        const label = `${day} ${month_names[currentdate.getMonth()]}, ${year}`;
+        
         setDobLable(label);
         setDateOfBirth(datetime);
     };
@@ -97,8 +84,9 @@ const CreateDateOfBirth = (props) => {
                 isVisible={is_date_picker_visible}
                 mode="date"
                 date={new Date()}
-                maximumDate={new Date(Date.now() + 10 * 60 * 1000)}
-                is24Hour={false}
+                maximumDate={new Date()} // Only allow dates in the past
+                minimumDate={new Date(1900, 0, 1)} // Reasonable minimum date
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'} // Better UI for iOS
                 onConfirm={handle_confirm}
                 onCancel={hide_date_picker}
             />
@@ -117,7 +105,7 @@ const CreateDateOfBirth = (props) => {
             </View>
             <View style={{ margin: 20 }} />
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <Text numberOfLines={1} style={{ color: colors.theme_fg_two, fontSize: f_xl, fontFamily: bold }}>{strings.enter_your_date_of_birth}</Text>
+                <Text numberOfLines={1} style={{ color: colors.theme_fg_two, fontSize: f_xl, fontFamily: bold }}>{"enter yr bd"}</Text>
                 <View style={{ margin: 5 }} />
                 <Text numberOfLines={1} style={{ color: colors.grey, fontSize: f_xs, fontFamily: normal }}>{strings.you_need_enter_your_date_of_birth}</Text>
                 <View style={{ margin: 20 }} />
@@ -126,26 +114,42 @@ const CreateDateOfBirth = (props) => {
                         <View style={{ width: '25%', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.theme_bg_three }}>
                             <Icon type={Icons.MaterialIcons} name="event" color={colors.theme_fg_two} style={{ fontSize: 30 }} />
                         </View>
-                        <TouchableOpacity activeOpacity={1} onPress={show_date_picker.bind(this)} style={{ width: '75%', alignItems: 'flex-start', paddingLeft: 10, justifyContent: 'center', backgroundColor: colors.text_container_bg }}>
-                            <TextInput
-                                ref={inputRef}
-                                secureTextEntry={false}
-                                placeholder={strings.licence_number}
-                                value={dob_label}
-                                editable={false}
-                                placeholderTextColor={colors.grey}
-                                style={styles.textinput}
-                                onChangeText={TextInputValue =>
-                                    setDateOfBirth(TextInputValue)}
-                            />
+                        <TouchableOpacity 
+                            activeOpacity={1} 
+                            onPress={show_date_picker.bind(this)} 
+                            style={{ 
+                                width: '75%', 
+                                alignItems: 'flex-start', 
+                                paddingLeft: 10, 
+                                justifyContent: 'center', 
+                                backgroundColor: colors.text_container_bg,
+                                height: 60
+                            }}
+                        >
+                            <Text style={[styles.textinput, { color: dob_label === 'Click and select the date' ? colors.grey : colors.theme_fg_two }]}>
+                                {dob_label}
+                            </Text>
                         </TouchableOpacity>
                     </View>
                     <View style={{ margin: 30 }} />
-                    <TouchableOpacity onPress={check_valid.bind(this)} activeOpacity={1} style={{ width: '100%', backgroundColor: colors.btn_color, borderRadius: 10, height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: colors.theme_fg_two, fontSize: f_m, color: colors.theme_fg_three, fontFamily: bold }}>{strings.next}</Text>
+                    <TouchableOpacity 
+                        onPress={check_valid.bind(this)} 
+                        activeOpacity={1} 
+                        style={{ 
+                            width: '100%', 
+                            backgroundColor: colors.btn_color, 
+                            borderRadius: 10, 
+                            height: 50, 
+                            flexDirection: 'row', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                        }}
+                    >
+                        <Text style={{ color: colors.theme_fg_three, fontSize: f_m, fontFamily: bold }}>
+                            {strings.next}
+                        </Text>
                     </TouchableOpacity>
                 </View>
-
             </View>
             <DropdownAlert alert={func => (alt = func)} />
             {date_picker()}
@@ -162,11 +166,9 @@ const styles = StyleSheet.create({
     },
     textinput: {
         fontSize: f_m,
-        color: colors.grey,
         fontFamily: regular,
-        height: 60,
-        backgroundColor: colors.text_container_bg,
-        width: '100%'
+        width: '100%',
+        paddingVertical: 0, // Fix for iOS text alignment
     },
 });
 
