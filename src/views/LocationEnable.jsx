@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, Platform, PermissionsAndroid } from 'react-native';
 import * as colors from '../assets/css/Colors';
 import { bold, location_enable } from '../config/Constants';
 import LottieView from 'lottie-react-native';
@@ -10,13 +10,50 @@ import strings from "../languages/strings.js";
 const LocationEnable = () => {
 
   const navigation = useNavigation();
-  const enable_gps = () =>{
-    Geolocation.getCurrentPosition( async(position) => {
-      navigation.navigate('Splash');
-    }, error => alert(strings.please_try_again_once) , 
-    {enableHighAccuracy: false, timeout: 10000 });
-  }
 
+const requestLocationPermission = async () => {
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Access Required',
+          message: 'This app needs to access your location for GPS functionality',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  } else {
+    return true; // iOS handled separately if needed
+  }
+};
+
+  const enable_gps = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      alert(strings.please_try_again_once);
+      return;
+    }
+  
+    Geolocation.getCurrentPosition(
+      async (position) => {
+        navigation.navigate('Splash');
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        alert(strings.please_try_again_once);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 1000,
+      }
+    );
+  };
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={{ height:'100%',width: '100%', justifyContent:'center'}}>

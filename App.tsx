@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createStackNavigator,TransitionPresets } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Icon, { Icons } from './src/components/Icons';
 import * as colors from './src/assets/css/Colors';
 import * as Animatable from 'react-native-animatable';
@@ -266,13 +266,16 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     alignItems: 'center',
+
+    marginBottom: Platform.OS === 'ios' ? -30 : 0,
   },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
     borderRadius: 16,
-  }
-})
+  },
+});
+
 
 export default App;

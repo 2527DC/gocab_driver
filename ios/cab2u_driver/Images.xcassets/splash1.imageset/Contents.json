@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "LaunchImage-Portrait~ipad_768x1024.png",
+      "idiom" : "ipad",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "LaunchImage~ipad.png",
+      "idiom" : "ipad",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
