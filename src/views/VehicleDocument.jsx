@@ -1,315 +1,425 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo } from 'react';
 import {
-  View, StyleSheet, Text, Image, TouchableOpacity, ScrollView, StatusBar
-} from "react-native";
-import { useNavigation } from "@react-navigation/native";
+  View,
+  StyleSheet,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StatusBar,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
-import DropdownAlert, {
-  DropdownAlertData,
-  DropdownAlertType,
-} from 'react-native-dropdownalert';
+import DropdownAlert from 'react-native-dropdownalert';
 import axios from 'axios';
-import { normal, bold, img_url, api_url, get_documents, upload_icon, id_proof_icon, vehicle_certificate_icon, vehicle_insurance_icon, vehicle_image_icon, f_xl, f_l, f_xs, f_s, f_m } from '../config/Constants';
-import Icon, { Icons } from '../components/Icons';
-import * as colors from '../assets/css/Colors';
-import strings from "../languages/strings.js";
 
-const VehicleDocument = (props) => {
+import * as colors from '../assets/css/Colors';
+import Icon, { Icons } from '../components/Icons';
+import {
+  normal,
+  bold,
+  img_url,
+  api_url,
+  get_documents,
+  upload_icon,
+  id_proof_icon,
+  vehicle_certificate_icon,
+  vehicle_insurance_icon,
+  vehicle_image_icon,
+  f_xl,
+  f_l,
+  f_xs,
+  f_s,
+  f_m,
+} from '../config/Constants';
+import strings from '../languages/strings';
+
+const VehicleDocument = () => {
   const navigation = useNavigation();
-  let alt = useRef(
-    (_data?: DropdownAlertData) => new Promise<DropdownAlertData>(res => res),
-  );
+  const dropdownAlertRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [id_proof, setIdProof] = useState({
+  const [idProof, setIdProof] = useState({
     path: id_proof_icon,
     status: 0,
     status_name: strings.waiting_for_upload,
-    color: colors.warning
+    color: colors.warning,
   });
-  const [vehicle_certificate, setVehicleCertificate] = useState({
+  const [vehicleCertificate, setVehicleCertificate] = useState({
     path: vehicle_certificate_icon,
     status: 0,
     status_name: strings.waiting_for_upload,
-    color: colors.warning
+    color: colors.warning,
   });
-  const [vehicle_insurance, setVehicleInsurance] = useState({
+  const [vehicleInsurance, setVehicleInsurance] = useState({
     path: vehicle_insurance_icon,
     status: 0,
     status_name: strings.waiting_for_upload,
-    color: colors.warning
+    color: colors.warning,
   });
-  const [vehicle_image, setVehicleImage] = useState({
+  const [vehicleImage, setVehicleImage] = useState({
     path: vehicle_image_icon,
     status: 0,
     status_name: strings.waiting_for_upload,
-    color: colors.warning
+    color: colors.warning,
   });
-  const [vehicle_id, setVehicleId] = useState(0);
-  const [upload_status, setUploadStatus] = useState(0);
+  const [vehicleId, setVehicleId] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState(0);
 
   useEffect(() => {
-    subscribe = navigation.addListener("focus", async () => {
-      call_get_documents();
+    const unsubscribe = navigation.addListener('focus', () => {
+      callGetDocuments();
     });
-    return subscribe;
-  }, []);
-  
+    return () => unsubscribe();
+  }, [navigation]);
 
-  axios.interceptors.request.use(async function (config) {
-    // Do something before request is sent
-    //console.log("loading")
-    setLoading(true);
-    return config;
-    }, function (error) {
-          console.log(error)
-          setLoading(false);
-          console.log("finish loading")
-          // Do something with request error
+  // Axios interceptor for loading state
+  useEffect(() => {
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        setLoading(true);
+        return config;
+      },
+      (error) => {
+        setLoading(false);
         return Promise.reject(error);
-  })
-
-  const find_document = (list) => {
-    list.map((data, index) => {
-      let value = { path: { uri: img_url + data.path }, status: data.status, status_name: data.status_name, color: get_status_foreground(data.status) }
-      if (data.document_name == 'id_proof') {
-        setIdProof(value);
-      } else if (data.document_name == 'vehicle_certificate') {
-        setVehicleCertificate(value);
-      } else if (data.document_name == 'vehicle_image') {
-        setVehicleImage(value);
-      } else if (data.document_name == 'vehicle_insurance') {
-        setVehicleInsurance(value);
       }
-    })
-  }
+    );
 
-  const get_status_foreground = (status) => {
-    if (status == 17) {
-      return colors.error
-    } else if (status == 14 || status == 15) {
-      return colors.warning
-    } else if (status == 16) {
-      return colors.success
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => {
+        setLoading(false);
+        return response;
+      },
+      (error) => {
+        setLoading(false );
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
+    };
+  }, []);
+
+  const showAlert = (type, title, message) => {
+    dropdownAlertRef.current?.alertWithType(type, title, message);
+  };
+
+  const findDocument = (list) => {
+    list.forEach((data) => {
+      const value = {
+        path: { uri: img_url + data.path },
+        status: data.status,
+        status_name: data.status_name,
+        color: getStatusForeground(data.status),
+      };
+      switch (data.document_name) {
+        case 'id_proof':
+          setIdProof(value);
+          break;
+        case 'vehicle_certificate':
+          setVehicleCertificate(value);
+          break;
+        case 'vehicle_image':
+          setVehicleImage(value);
+          break;
+        case 'vehicle_insurance':
+          setVehicleInsurance(value);
+          break;
+      }
+    });
+  };
+
+  const getStatusForeground = (status) => {
+    switch (status) {
+      case 17:
+        return colors.error;
+      case 14:
+      case 15:
+        return colors.warning;
+      case 16:
+        return colors.success;
+      default:
+        return colors.warning;
     }
-  }
+  };
 
-  const move_to_upload = (slug, status, path) => {
-    let table = slug == "id_proof" ? "drivers" : "driver_vehicles";
-    let find_field = slug == "id_proof" ? "id" : "id";
-    let find_value = slug == "id_proof" ? global.id : vehicle_id;
-    let status_field = slug == "id_proof" ? 'id_proof_status' : slug + '_status';
-    if (status == 14) {
-      navigation.navigate("DocumentUpload", { slug: slug, path: upload_icon, status: status, table: table, find_field: find_field, find_value: find_value, status_field: status_field });
-    } else {
-      navigation.navigate("DocumentUpload", { slug: slug, path: path, status: status, table: table, find_field: find_field, find_value: find_value, status_field: status_field });
-    }
-  }
+  const moveToUpload = (slug, status, path) => {
+    const table = slug === 'id_proof' ? 'drivers' : 'driver_vehicles';
+    const find_field = slug === 'id_proof' ? 'id' : 'id';
+    const find_value = slug === 'id_proof' ? global.id : vehicleId;
+    const status_field = slug === 'id_proof' ? 'id_proof_status' : `${slug}_status`;
 
-  const go_back = () => {
+    navigation.navigate('DocumentUpload', {
+      slug,
+      path: status === 14 ? upload_icon : path,
+      status,
+      table,
+      find_field,
+      find_value,
+      status_field,
+    });
+  };
+
+  const goBack = () => {
     navigation.navigate('Home');
-  }
-  
-  const call_get_documents = async () => {
-   
-    await axios({
-      method: 'post',
-      url: api_url + get_documents,
-      data: { driver_id: global.id, lang: global.lang }
-    })
-      .then(async response => {
-        setLoading(false);
-        setVehicleId(response.data.result.details.vehicle_id);
-        if (response.data.result.documents[0].status == 15 && response.data.result.documents[1].status == 15 && response.data.result.documents[2].status == 15 && response.data.result.documents[3].status == 15) {
-          setUploadStatus(1);
-        } else {
-          find_document(response.data.result.documents)
-        }
-      })
-      .catch(error => {
-        console.log(error);
-        setLoading(false);
-        alt({
-          type: DropdownAlertType.Error,
-          title: strings.error,
-          message: strings.sorry_something_went_wrong,
-        });
-        
-      });
-  }
+  };
 
- 
+  const callGetDocuments = async () => {
+    try {
+      const response = await axios.post(api_url + get_documents, {
+        driver_id: global.id,
+        lang: global.lang,
+      });
+
+      setVehicleId(response.data.result.details.vehicle_id);
+      if (response.data.result.documents.every((doc) => doc.status === 15)) {
+        setUploadStatus(1);
+      } else {
+        findDocument(response.data.result.documents);
+      }
+    } catch (error) {
+      console.error('Get documents error:', error);
+      showAlert(
+        DropdownAlert.DropdownAlertType.Error,
+        strings.error,
+        strings.sorry_something_went_wrong
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderDocumentSection = (
+    title,
+    description,
+    document,
+    slug,
+    uploadText
+  ) => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={styles.sectionDescription}>{description}</Text>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => moveToUpload(slug, document.status, document.path)}
+        style={styles.documentContainer}
+        accessibilityLabel={`Upload ${title}`}
+      >
+        <View style={styles.documentInfo}>
+          <Text style={[styles.statusText, { color: document.color }]}>
+            {document.status_name}
+          </Text>
+          <Text style={styles.uploadText}>{uploadText}</Text>
+        </View>
+        <View style={styles.imageContainer}>
+          <Image
+            source={document.path}
+            style={styles.documentImage}
+            resizeMode="contain"
+          />
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         backgroundColor={colors.theme_bg}
+        barStyle={Platform.OS === 'ios' ? 'dark-content' : 'light-content'}
       />
-      <View style={[styles.header]}>
-        <TouchableOpacity activeOpacity={1} onPress={go_back.bind(this)} style={{ width: '15%', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon type={Icons.MaterialIcons} name="arrow-back" color={colors.theme_fg_two} style={{ fontSize: 30 }} />
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={goBack}
+          style={styles.backButton}
+          accessibilityLabel="Go back"
+        >
+          <Icon
+            type={Icons.MaterialIcons}
+            name="arrow-back"
+            color={colors.theme_fg_two}
+            style={styles.backIcon}
+          />
         </TouchableOpacity>
       </View>
-      {upload_status == 0 ?
-        <View style={{ padding: 10 }}>
-          <View>
-            <Text style={{ fontFamily: bold, color: colors.theme_fg, fontSize: f_xl }}>
-            {strings.upload_your_documents} (4)
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {uploadStatus === 0 ? (
+          <View style={styles.content}>
+            <Text style={styles.title}>
+              {strings.upload_your_documents} (4)
             </Text>
-            <View style={{ margin: 5 }} />
+            {renderDocumentSection(
+              strings.id_proof,
+              strings.make_sure_that_every_details_of_the_document_is_clearly_visible,
+              idProof,
+              'id_proof',
+              strings.upload_your_passport_or_driving_licence_or_any_one_id_proof
+            )}
+            {renderDocumentSection(
+              strings.certificate,
+              strings.make_sure_that_every_details_of_the_document_is_clearly_visible,
+              vehicleCertificate,
+              'vehicle_certificate',
+              strings.upload_your_vehicle_registration_certificate
+            )}
+            {renderDocumentSection(
+              strings.vehicle_insurance,
+              strings.make_sure_that_every_details_of_the_document_is_clearly_visible,
+              vehicleInsurance,
+              'vehicle_insurance',
+              strings.upload_your_vehicle_insurance_document
+            )}
+            {renderDocumentSection(
+              strings.vehicle_image,
+              strings.upload_your_vehicle_image,
+              vehicleImage,
+              'vehicle_image',
+              strings.upload_your_vehicle_image_with_number_board
+            )}
           </View>
-          <View style={{ margin: 10 }} />
-          <View>
-            <Text style={{ fontFamily: bold, color: colors.theme_fg_two, fontSize: f_l }}>
-              {strings.id_proof}
+        ) : (
+          <View style={styles.successContainer}>
+            <Text style={styles.successText}>
+              {strings.your_documents_are_uploaded_please_wait_admin_will_verify_your_documents}
             </Text>
-            <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>
-             {strings.make_sure_that_every_details_of_the_document_is_clearly_visible}
-            </Text>
-            <View style={{ margin: 10 }} />
-            <TouchableOpacity onPress={move_to_upload.bind(this, 'id_proof', id_proof.status, id_proof.path)} activeOpacity={1} style={{ borderWidth: 1, padding: 10, borderRadius: 5, borderStyle: 'dashed', flexDirection: 'row' }}>
-              <View style={{ width: '70%' }}>
-                <Text style={{ fontFamily: bold, color: id_proof.color, fontSize: f_s }}>{id_proof.status_name}</Text>
-                <View style={{ margin: 5 }} />
-                <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>{strings.upload_your_passport_or_driving_licence_or_any_one_id_proof}</Text>
-              </View>
-              <View style={{ width: '30%', alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={id_proof.path} style={{ height: 75, width: 75 }} />
-              </View>
+            <TouchableOpacity
+              onPress={goBack}
+              style={styles.homeButton}
+              activeOpacity={0.8}
+              accessibilityLabel="Go to Home"
+            >
+              <Text style={styles.homeButtonText}>{strings.go_to_home}</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ margin: 10 }} />
-          <View>
-            <Text style={{ fontFamily: bold, color: colors.theme_fg_two, fontSize: f_l }}>
-              {strings.certificate}
-            </Text>
-            <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>
-             {strings.make_sure_that_every_details_of_the_document_is_clearly_visible}
-            </Text>
-            <View style={{ margin: 10 }} />
-            <TouchableOpacity onPress={move_to_upload.bind(this, 'vehicle_certificate', vehicle_certificate.status, vehicle_certificate.path)} activeOpacity={1} style={{ borderWidth: 1, padding: 10, borderRadius: 5, borderStyle: 'dashed', flexDirection: 'row' }}>
-              <View style={{ width: '70%' }}>
-                <Text style={{ fontFamily: bold, color: vehicle_certificate.color, fontSize: f_s }}>{vehicle_certificate.status_name}</Text>
-                <View style={{ margin: 5 }} />
-                <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>{strings.upload_your_vehicle_registration_certificate}</Text>
-              </View>
-              <View style={{ width: '30%', alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={vehicle_certificate.path} style={{ height: 75, width: 75 }} />
-              </View>
-            </TouchableOpacity>
-          </View>
-          <View style={{ margin: 10 }} />
-          <View>
-            <Text style={{ fontFamily: bold, color: colors.theme_fg_two, fontSize: f_l }}>
-             {strings.vehicle_insurance}
-            </Text>
-            <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>
-            {strings.make_sure_that_every_details_of_the_document_is_clearly_visible}
-            </Text>
-            <View style={{ margin: 10 }} />
-            <TouchableOpacity onPress={move_to_upload.bind(this, 'vehicle_insurance', vehicle_insurance.status, vehicle_insurance.path)} activeOpacity={1} style={{ borderWidth: 1, padding: 10, borderRadius: 5, borderStyle: 'dashed', flexDirection: 'row' }}>
-              <View style={{ width: '70%' }}>
-                <Text style={{ fontFamily: bold, color: vehicle_insurance.color, fontSize: f_s }}>{vehicle_insurance.status_name}</Text>
-                <View style={{ margin: 5 }} />
-                <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>Upload your vehicle insurance document</Text>
-              </View>
-              <View style={{ width: '30%', alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={vehicle_insurance.path} style={{ height: 75, width: 75 }} />
-              </View>
-            </TouchableOpacity>
-          </View>
-          <View style={{ margin: 10 }} />
-          <View>
-            <Text style={{ fontFamily: bold, color: colors.theme_fg_two, fontSize: f_l }}>
-              {strings.vehicle_image}
-            </Text>
-            <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>
-              {strings.upload_your_vehicle_image}
-            </Text>
-            <View style={{ margin: 10 }} />
-            <TouchableOpacity onPress={move_to_upload.bind(this, 'vehicle_image', vehicle_image.status, vehicle_image.path)} activeOpacity={1} style={{ borderWidth: 1, padding: 10, borderRadius: 5, borderStyle: 'dashed', flexDirection: 'row' }}>
-              <View style={{ width: '70%' }}>
-                <Text style={{ fontFamily: bold, color: vehicle_image.color, fontSize: f_s }}>{vehicle_image.status_name}</Text>
-                <View style={{ margin: 5 }} />
-                <Text style={{ fontFamily: normal, color: colors.grey, fontSize: f_xs }}>{strings.upload_your_vehicle_image_with_number_board}</Text>
-              </View>
-              <View style={{ width: '30%', alignItems: 'center', justifyContent: 'center' }}>
-                <Image source={vehicle_image.path} style={{ height: 75, width: 75 }} />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-        :
-        <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: bold, color: colors.theme_fg_two, fontSize: f_s }}>{strings.your_documents_are_uploaded_please_wait_admin_will_verify_your_documents}</Text>
-          <View style={{ margin: 20 }} />
-          <TouchableOpacity onPress={go_back.bind(this)} activeOpacity={1} style={{ width: '100%', backgroundColor: colors.btn_color, borderRadius: 10, height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: colors.theme_fg_two, fontSize: f_m, color: colors.theme_fg_three, fontFamily: bold }}>{strings.go_to_home}</Text>
-          </TouchableOpacity>
-        </View>
-      }
-       <DropdownAlert alert={func => (alt = func)} />
-    </ScrollView>
+        )}
+      </ScrollView>
+      <DropdownAlert ref={dropdownAlertRef} />
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.lite_bg,
+  },
   header: {
     height: 60,
     backgroundColor: colors.lite_bg,
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    ...Platform.select({
+      ios: {
+        paddingTop: 10,
+      },
+    }),
   },
-  flex_1: {
-    flex: 1
+  backButton: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  icon: {
-    color: colors.theme_fg_three
+  backIcon: {
+    fontSize: 30,
   },
-  header_body: {
-    flex: 3,
-    justifyContent: 'center'
+  scrollView: {
+    flex: 1,
   },
-  upload_image: {
-    width: 150,
-    height: 150,
-    borderColor: colors.theme_bg_three,
-    borderWidth: 1
+  scrollContent: {
+    paddingBottom: 20,
   },
-  body_section: {
-    width: '100%',
+  content: {
+    padding: 15,
+  },
+  title: {
+    fontFamily: bold,
+    color: colors.theme_fg_two,
+    fontSize: f_xl,
+    marginBottom: 15,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontFamily: bold,
+    color: colors.theme_fg_two,
+    fontSize: f_l,
+  },
+  sectionDescription: {
+    fontFamily: normal,
+    color: colors.grey,
+    fontSize: f_xs,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  documentContainer: {
+    borderWidth: 1,
+    borderColor: colors.grey,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.theme_bg_three,
+  },
+  documentInfo: {
+    flex: 0.7,
+  },
+  statusText: {
+    fontFamily: bold,
+    fontSize: f_s,
+    marginBottom: 5,
+  },
+  uploadText: {
+    fontFamily: normal,
+    color: colors.grey,
+    fontSize: f_xs,
+  },
+  imageContainer: {
+    flex: 0.3,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 20,
-    marginBottom: 30,
-    paddingBottom: 20
   },
-  footer_section: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10
+  documentImage: {
+    width: 75,
+    height: 75,
   },
-  name_title: {
-    alignSelf: 'center',
-    color: colors.theme_fg,
-    alignSelf: 'center',
-    fontSize: 20,
-    letterSpacing: 0.5,
-    fontFamily: bold
-  },
-  footer: {
-    height: 45,
+  successContainer: {
+    flex: 1,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    backgroundColor: colors.theme_bg
   },
-  cnf_button_style: {
-    backgroundColor: colors.theme_bg,
+  successText: {
+    fontFamily: bold,
+    color: colors.theme_fg_two,
+    fontSize: f_s,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  homeButton: {
     width: '100%',
-    height: '100%',
+    backgroundColor: colors.btn_color,
+    borderRadius: 10,
+    height: 50,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+  },
+  homeButtonText: {
+    fontFamily: bold,
+    color: colors.theme_fg_three,
+    fontSize: f_m,
   },
 });
 
-export default connect(null, null)(VehicleDocument);
+export default connect(null, null)(memo(VehicleDocument));

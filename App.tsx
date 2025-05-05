@@ -74,12 +74,15 @@ import Paypal from './src/views/Paypal';
 import AppUpdate from './src/views/AppUpdate'; 
 import PrivacyPolicies from './src/views/PrivacyPolicies';
 import RNRestart from 'react-native-restart';
+import Practice from './src/views/Practice.jsx';
 
 const TabArr = [
   { route: 'Dashboard', label:"Home", ar_label:"بيت", type: Icons.FontAwesome, icon: 'car', component: Dashboard, color: colors.theme_fg, alphaClr: colors.theme_bg_three },
   { route: 'Bookings', label:"Bookings", ar_label:"الحجوزات", type: Icons.FontAwesome, icon: 'book', component: Bookings, color: colors.theme_fg, alphaClr: colors.theme_bg_three },
   //{ route: 'MyRentalRides', label:'Hire Trips', type: Icons.MaterialIcons, icon: 'car-rental', component: MyRentalRides, color: colors.theme_fg, alphaClr: colors.theme_bg_three },
   { route: 'More', label:"More", ar_label:"أكثر", type: Icons.Ionicons, icon: 'settings', component: More, color: colors.theme_fg, alphaClr: colors.theme_bg_three },
+  { route: 'Pra', label:"Pra", ar_label:"أكثر", type: Icons.Ionicons, icon: 'settings', component: Practice, color: colors.theme_fg, alphaClr: colors.theme_bg_three },
+
 ];
 
 const Tab = createBottomTabNavigator();

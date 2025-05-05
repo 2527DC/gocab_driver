@@ -3,7 +3,7 @@ import { Dimensions } from "react-native";
 export const app_name = "Cab2U";
 export const base_url = "https://gocab.tech/";
 export const api_url = "https://gocab.tech/api/";
-export const img_url = "enter_admin_link/public/uploads/";
+export const img_url = "https://gocab.tech/public/uploads/";
 export const prefix = "driver/";
 export const failed_url = "paypal_failed"; 
 export const success_url = "paypal_success"; 

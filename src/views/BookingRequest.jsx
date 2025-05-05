@@ -105,7 +105,7 @@ const BookingRequest = (props) => {
           <View style={styles.container}>
             <Text style={{ fontSize: f_xl, color: colors.theme_fg, fontFamily: bold }}>{strings.pickup_location}</Text>
             <View style={{ margin: 5 }} />
-            <Text style={{ fontSize: f_s, color: colors.theme_fg_two, fontFamily: regular }}>{data.pickup_address}</Text>
+            <Text style={{ fontSize: f_s, color: colors.theme_fg_two, fontFamily: regular }}>{data?.pickup_address}</Text>
             <View style={{ margin: 10 }} />
             <CountdownCircleTimer
               isPlaying={1}
@@ -115,22 +115,22 @@ const BookingRequest = (props) => {
                 call_reject();
               }}
             >
-              {() => <Image source={{ uri: img_url + data.static_map }} style={{ height: 160, width: 160, borderRadius: 80 }} />}
+              {() => <Image source={{ uri: img_url + data?.static_map }} style={{ height: 160, width: 160, borderRadius: 80 }} />}
             </CountdownCircleTimer>
 
             <View style={{ margin: 10 }} />
             <Text style={{ fontSize: f_xl, color: colors.theme_fg, fontFamily: bold }}>{strings.drop_location}</Text>
             <View style={{ margin: 5 }} />
-            <Text style={{ fontSize: f_s, color: colors.theme_fg_two, fontFamily: regular }}>{data.drop_address}</Text>
+            <Text style={{ fontSize: f_s, color: colors.theme_fg_two, fontFamily: regular }}>{data?.drop_address}</Text>
             <View style={{ margin: 10 }} />
             <View style={{ borderColor: colors.theme_fg_two, borderWidth: 0.5, width: '80%' }} />
             <View style={{ margin: 10 }} />
-            <Text style={{ fontSize: f_xl, color: colors.theme_fg_two, fontFamily: bold }}>{data.trip_type_name}</Text>
-            <Text style={{ fontSize: f_xl, color: colors.theme_fg_two, fontFamily: bold }}>{global.currency}{data.total}</Text>
+            <Text style={{ fontSize: f_xl, color: colors.theme_fg_two, fontFamily: bold }}>{data?.trip_type_name}</Text>
+            <Text style={{ fontSize: f_xl, color: colors.theme_fg_two, fontFamily: bold }}>{global.currency}{data?.total}</Text>
             <Text style={{ fontSize: f_xs, color: colors.theme_fg_two, fontFamily: bold }} >{strings.estimated_fare}</Text>
           </View>
           <View style={styles.footer} >
-            <Text style={{ color: colors.theme_fg_three, fontFamily: bold, fontSize: f_xl }}>{data.first_name}</Text>
+            <Text style={{ color: colors.theme_fg_three, fontFamily: bold, fontSize: f_xl }}>{data?.first_name}</Text>
           </View>
         </View>
         :
